@@ -1,93 +1,99 @@
-#include <SDL/SDL.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/ioctl.h>
+#include <string.h>
+//#include <joystick.h>
+#include <stdint.h>
+#include <unistd.h>
 
+/*
+  Some stuff stole from /usr/include/linux/joystick.h
+  For some reason mt env couldn't find the header when I tries to include it.
+  When I pointed GCC ti it -I it threw a bunch of errors.
+*/
+ 
+#define SOMETGING "\e[0;36m%s\e[0m\n"
 #define TERMINATE 12
+#define JSIOCGNAME(len)		_IOC(_IOC_READ, 'j', 0x13, len)
+#define JS_EVENT_AXIS		0x02	/* joystick moved */
 
-//gcc -lSDL main.c
+//gcc main.c
 
-int main()  {
+typedef struct js_event_s {
+        uint32_t time;     /* event timestamp in milliseconds */
+        uint16_t value;    /* value */
+        uint8_t  type;      /* event type */
+        uint8_t  number;    /* axis/button number */
+} js_event_t;
 
-  SDL_Event     e;
-  SDL_Joystick* js;
-  int           js_count, quit, i;
-  int           axis_buff[6]; //quick specific hack.
+
+int fd;
+
+void usage(char* p)  {
+
+  printf("usage:\n%s /dev/input/jsSOMETHING\a\n\n");
+}
+
+void Finish()  {
+
+  close(fd);
+}
+
+int main(int argc, char *argv[])  {
+
+  js_event_t      e;
+  int             js_count, quit, i;
+  int             axis_buff[6]; //quick specific hack.//FIX
+  char            JoyNameBuff[128];
   
-  if (SDL_Init(SDL_INIT_JOYSTICK|SDL_INIT_VIDEO) != 0)  {
+  if (argc < 2)  {
   
-    printf("Error: %s\n", SDL_GetError());
+    usage(argv[0]);
     exit(1);
   }
   
-  atexit(SDL_Quit);
-  
-  js_count = SDL_NumJoysticks();
-  
-  printf("\nFound %i joysticks\n\n", js_count);
-  
-  for ( i = 0; i < js_count; i++ )  {
-  
-    printf("JOYSTICK #%i\n", i);
-    js = SDL_JoystickOpen(i);
+  atexit(Finish);
     
-    if ( js == NULL )
-      printf("Unable to open joystick #%i..\n", i);
-      
-    else  {
-    
-      printf("\e[0;36m%s\e[0m\n", SDL_JoystickName(i));
-      printf("Axes: %i\tButtons: %i\tTrackballs: %i\n",
-             SDL_JoystickNumAxes(js),
-	     SDL_JoystickNumButtons(js),
-	     SDL_JoystickNumBalls(js));
-	     
-      SDL_JoystickClose(js);
-    }
-  }
-    
-  printf("\nWhich joystick would you like to open: ");
-  scanf("%d", &i);
   
-  if (SDL_SetVideoMode(256, 256, 16, 0) == NULL)  {
-  
-    puts("video error");
-    exit(1);
-  }
-    
-  printf("opening joystick #%i\n", i);
-  printf("\e[0;36m%s\e[0m...\n", SDL_JoystickName(i));
-  js = SDL_JoystickOpen(i);
+  fd = open (argv[1], O_RDONLY); //do some error handling.
+/*  
   
   if ( js == NULL )  {
   
       printf("Unable to open joystick #%i..\n", i);
       exit(1);
   }
+*/
+
+
+  if (ioctl(fd, JSIOCGNAME(sizeof(JoyNameBuff)), JoyNameBuff) < 0)
   
-  while(SDL_WaitEvent(&e))  {
+    strncpy(JoyNameBuff, "Unknown", sizeof(JoyNameBuff));
+
+  printf("Name: %s\n", JoyNameBuff);
+
+
+  while(read (fd, &e, sizeof(e)))  {
   
     switch(e.type)  {
     
-      case SDL_JOYAXISMOTION: {
+      case JS_EVENT_AXIS: {
       
-        if ( axis_buff[(e.jaxis.axis-1)] != e.jaxis.value )  {
+    //    if ( axis_buff[(e.jaxis.axis-1)] != e.jaxis.value )  {
 	
-          printf("%i, %i\n", e.jaxis.axis, e.jaxis.value);
-	  axis_buff[(e.jaxis.axis-1)] = e.jaxis.value;
-	}
+          printf("%i, %i\n", e.number, e.value);
+	//  axis_buff[(e.jaxis.axis-1)] = e.jaxis.value;
+	//}
 	
 	break;
       }
       
-      case SDL_JOYBUTTONUP:   { break; }
-      
-      case SDL_JOYBUTTONDOWN: { break; }
-      
-      case TERMINATE:         { exit(0); }
-      
       default: { break; }
     }
   }
-  
+ 
   return 0;
 }
