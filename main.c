@@ -15,7 +15,8 @@
   When I pointed GCC ti it -I it threw a bunch of errors.
 */
  
-#define SOMETGING "\e[0;36m%s\e[0m\n"
+#define CYAN "\e[0;36m"
+#define NORMAL "\e[0m"
 #define TERMINATE 12
 #define JSIOCGNAME(len)		_IOC(_IOC_READ, 'j', 0x13, len)
 #define JS_EVENT_AXIS		0x02	/* joystick moved */
@@ -58,22 +59,20 @@ int main(int argc, char *argv[])  {
   atexit(Finish);
     
   
-  fd = open (argv[1], O_RDONLY); //do some error handling.
-/*  
+  if( (fd = open (argv[1], O_RDONLY)) == -1 )  {
   
-  if ( js == NULL )  {
-  
-      printf("Unable to open joystick #%i..\n", i);
+      perror("open() - joystick device");
       exit(1);
   }
-*/
 
 
   if (ioctl(fd, JSIOCGNAME(sizeof(JoyNameBuff)), JoyNameBuff) < 0)
   
     strncpy(JoyNameBuff, "Unknown", sizeof(JoyNameBuff));
 
-  printf("Name: %s\n", JoyNameBuff);
+  printf(CYAN);
+  printf("%s\n", JoyNameBuff);
+  printf(NORMAL);
 
 
   while(read (fd, &e, sizeof(e)))  {
