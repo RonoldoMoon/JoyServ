@@ -59,7 +59,7 @@ int main(int argc, char *argv[])  {
   atexit(Finish);
     
   
-  if( (fd = open (argv[1], O_RDONLY)) == -1 )  {
+  if( (fd = open(argv[1], O_RDONLY)) == -1 )  {
   
       perror("open() - joystick device");
       exit(1);
@@ -80,13 +80,8 @@ int main(int argc, char *argv[])  {
     switch(e.type)  {
     
       case JS_EVENT_AXIS: {
-      
-    //    if ( axis_buff[(e.jaxis.axis-1)] != e.jaxis.value )  {
 	
-          printf("%i, %i\n", e.number, e.value);
-	//  axis_buff[(e.jaxis.axis-1)] = e.jaxis.value;
-	//}
-	
+        printf("%i, %i\n", e.number, e.value);
 	break;
       }
       
