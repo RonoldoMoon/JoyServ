@@ -35,7 +35,7 @@ int fd;
 
 void usage(char* p)  {
 
-  printf("usage:\n%s /dev/input/jsSOMETHING\a\n\n");
+  printf("usage:\n%s /dev/input/jsSOMETHING\a\n\n", p);
 }
 
 void Finish()  {
@@ -47,7 +47,9 @@ int main(int argc, char *argv[])  {
 
   js_event_t      e;
   int             js_count, quit, i;
-  int             axis_buff[6]; //quick specific hack.//FIX
+  int             LeftAxis, RightAxis;  //later up and down.
+  int             LeftValue = 0;
+  int             RightValue = 0;
   char            JoyNameBuff[128];
   
   if (argc < 2)  {
@@ -73,9 +75,11 @@ int main(int argc, char *argv[])  {
   printf(CYAN);
   printf("%s\n", JoyNameBuff);
   printf(NORMAL);
+  
+  printf("\nPlay with all the different axis for a 100 cycles\n");
 
 
-  while(read (fd, &e, sizeof(e)))  {
+  for ( i = 0; i < 100; i++, read(fd, &e, sizeof(e)) )  {
   
     switch(e.type)  {
     
@@ -88,6 +92,42 @@ int main(int argc, char *argv[])  {
       default: { break; }
     }
   }
- 
+  
+  printf("\nWhich axis do you want for the left: ");
+  scanf("%d", &LeftAxis);
+  printf("\nWhich axis do you want for the right: ");
+  scanf("%d", &RightAxis);
+  
+  printf("\nSuper!...\n\n");
+  
+  for ( i = 0; i < 3; i++, read(fd, &e, sizeof(e))); //Read some garbage bytes.
+  
+  while ( read(fd, &e, sizeof(e)) )  {
+  
+    switch(e.type)  {
+    
+      case JS_EVENT_AXIS: {
+	
+	if ( e.number == RightAxis )  {
+	
+          //printf("%i, %i\n", e.number, e.value);
+	  RightValue = e.value;
+	  printf("%i, %i\n", LeftValue, RightValue);  //OUTPUT
+	}
+	
+	else if ( e.number == LeftAxis )  {
+	
+	  LeftValue = e.value;
+	  printf("%i, %i\n", LeftValue, RightValue);  //OUTPUT
+	}
+	
+	break;
+      }
+      
+      default: { break; }
+    }
+  } 
+  
+  
   return 0;
 }
