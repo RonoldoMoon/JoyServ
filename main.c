@@ -25,7 +25,7 @@
 
 typedef struct js_event_s {
         uint32_t time;     /* event timestamp in milliseconds */
-        uint16_t value;    /* value */
+        int16_t  value;    /* value */
         uint8_t  type;      /* event type */
         uint8_t  number;    /* axis/button number */
 } js_event_t;
